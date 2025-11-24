@@ -421,7 +421,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, onValue, remove, get, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, set, onValue, remove, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         // Firebase 설정
         const firebaseConfig = {
@@ -439,7 +439,7 @@
         const database = getDatabase(app);
 
         let currentStudent = '';
-        let onlineUsers = {};
+        let myUserId = '';
 
         // 전역 함수로 노출
         window.login = login;
@@ -472,10 +472,11 @@
             initializeClassroom();
         }
 
-        // 온라인 사용자 추가
+        // 온라인 사용자 추가 (수정: 소수점 제거)
         function addOnlineUser(name) {
-            const userId = Date.now() + '_' + Math.random();
-            const userRef = ref(database, `online/${userId}`);
+            // 소수점이 없는 안전한 ID 생성
+            myUserId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+            const userRef = ref(database, `online/${myUserId}`);
             
             set(userRef, {
                 name: name,
