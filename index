@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학급 자리 티켓팅 (실시간)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .status-badge {
+            text-align: center;
+            color: #51cf66;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .login-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            margin: 100px auto;
+        }
+
+        .login-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            width: 100%;
+            padding: 10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .info-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .user-info {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .seat-count {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .online-count {
+            font-size: 1em;
+            color: #51cf66;
+            font-weight: bold;
+        }
+
+        .classroom {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .teacher-desk {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .sections-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .section {
+            flex: 1;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .seat {
+            width: 70px;
+            height: 70px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .seat:hover:not(.taken) {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            background: #f0f4ff;
+        }
+
+        .seat.taken {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+            cursor: not-allowed;
+            color: white;
+        }
+
+        .seat.my-seat {
+            background: #51cf66;
+            border-color: #51cf66;
+            color: white;
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(81, 207, 102, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(81, 207, 102, 0.8); }
+        }
+
+        .seat-number {
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .seat-owner {
+            font-size: 0.75em;
+            margin-top: 3px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 2px solid;
+        }
+
+        .legend-box.available {
+            background: white;
+            border-color: #667eea;
+        }
+
+        .legend-box.taken {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .legend-box.mine {
+            background: #51cf66;
+            border-color: #51cf66;
+        }
+
+        @media (max-width: 768px) {
+            .sections-container {
+                flex-direction: column;
+            }
+            
+            .seat {
+                width: 60px;
+                height: 60px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 로그인 섹션 -->
+        <div id="loginSection" class="login-section">
+            <h2>🎓 학급 자리 티켓팅</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 20px;">실시간 동시 접속 가능</p>
+            <div class="input-group">
+                <label for="studentName">이름을 입력하세요</label>
+                <input type="text" id="studentName" placeholder="홍길동" autocomplete="off">
+            </div>
+            <button class="btn-login" id="loginBtn" onclick="login()">입장하기</button>
+            <button class="btn-reset" onclick="resetAllSeats()">🔄 모든 자리 초기화 (관리자)</button>
+        </div>
+
+        <!-- 메인 섹션 -->
+        <div id="mainSection" class="hidden">
+            <h1>🎓 학급 자리 티켓팅</h1>
+            <div class="status-badge">🟢 실시간 연결됨</div>
+            <p class="subtitle">원하는 자리를 클릭하세요! 빠른 사람이 임자!</p>
+
+            <div class="info-panel">
+                <div class="user-info">
+                    👤 <span id="currentUser"></span>님
+                </div>
+                <div class="seat-count">
+                    남은 자리: <span id="availableSeats">35</span>/35
+                </div>
+                <div class="online-count">
+                    👥 접속 중: <span id="onlineCount">1</span>명
+                </div>
+            </div>
+
+            <div class="classroom">
+                <div class="teacher-desk">
+                    📚 교탁 📚
+                </div>
+
+                <div class="sections-container">
+                    <!-- 1분단 (7명) -->
+                    <div class="section">
+                        <div class="section-title">1분단</div>
+                        <div id="section1"></div>
+                    </div>
+
+                    <!-- 2분단 (10명) -->
+                    <div class="section">
+                        <div class="section-title">2분단</div>
+                        <div id="section2"></div>
+                    </div>
+
+                    <!-- 3분단 (10명) -->
+                    <div class="section">
+                        <div class="section-title">3분단</div>
+                        <div id="section3"></div>
+                    </div>
+
+                    <!-- 4분단 (8명) -->
+                    <div class="section">
+                        <div class="section-title">4분단</div>
+                        <div id="section4"></div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box available"></div>
+                        <span>선택 가능</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box taken"></div>
+                        <span>선택됨</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box mine"></div>
+                        <span>내 자리</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, remove, get, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKWBO6YGUD5WOGHUvD_r6IYBWs1faHRGI",
+            authDomain: "classroom-seating-6aa38.firebaseapp.com",
+            databaseURL: "https://classroom-seating-6aa38-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "classroom-seating-6aa38",
+            storageBucket: "classroom-seating-6aa38.firebasestorage.app",
+            messagingSenderId: "853071803372",
+            appId: "1:853071803372:web:9124818e4364b594f346c9"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        let currentStudent = '';
+        let onlineUsers = {};
+
+        // 전역 함수로 노출
+        window.login = login;
+        window.resetAllSeats = resetAllSeats;
+
+        // 로그인
+        function login() {
+            const nameInput = document.getElementById('studentName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('이름을 입력해주세요!');
+                return;
+            }
+
+            currentStudent = name;
+            document.getElementById('currentUser').textContent = name;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            
+            // 온라인 사용자 추가
+            addOnlineUser(name);
+            
+            // 자리 데이터 실시간 감지
+            listenToSeats();
+            
+            // 온라인 사용자 실시간 감지
+            listenToOnlineUsers();
+            
+            initializeClassroom();
+        }
+
+        // 온라인 사용자 추가
+        function addOnlineUser(name) {
+            const userId = Date.now() + '_' + Math.random();
+            const userRef = ref(database, `online/${userId}`);
+            
+            set(userRef, {
+                name: name,
+                timestamp: Date.now()
+            });
+
+            // 페이지 나갈 때 온라인 사용자 제거
+            window.addEventListener('beforeunload', () => {
+                remove(userRef);
+            });
+        }
+
+        // 온라인 사용자 실시간 감지
+        function listenToOnlineUsers() {
+            const onlineRef = ref(database, 'online');
+            onValue(onlineRef, (snapshot) => {
+                const data = snapshot.val();
+                const count = data ? Object.keys(data).length : 0;
+                document.getElementById('onlineCount').textContent = count;
+                
+                // 5분 이상 지난 사용자 제거
+                if (data) {
+                    const now = Date.now();
+                    Object.keys(data).forEach(userId => {
+                        if (now - data[userId].timestamp > 300000) {
+                            remove(ref(database, `online/${userId}`));
+                        }
+                    });
+                }
+            });
+        }
+
+        // 자리 데이터 실시간 감지
+        function listenToSeats() {
+            const seatsRef = ref(database, 'seats');
+            onValue(seatsRef, (snapshot) => {
+                const data = snapshot.val();
+                updateClassroom(data || {});
+                updateSeatCount(data || {});
+            });
+        }
+
+        // 교실 초기화
+        function initializeClassroom() {
+            // 1분단 (2명씩 4줄 = 8명, 하지만 7명만)
+            createSection('section1', 1, 4, 2, 7);
+            
+            // 2분단 (2명씩 5줄 = 10명)
+            createSection('section2', 2, 5, 2, 10);
+            
+            // 3분단 (2명씩 5줄 = 10명)
+            createSection('section3', 3, 5, 2, 10);
+            
+            // 4분단 (2명씩 4줄 = 8명)
+            createSection('section4', 4, 4, 2, 8);
+        }
+
+        // 분단별 자리 생성
+        function createSection(containerId, sectionNum, rows, seatsPerRow, totalSeats) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            let seatCount = 0;
+            
+            for (let row = 0; row < rows; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+                
+                for (let col = 0; col < seatsPerRow; col++) {
+                    if (seatCount >= totalSeats) break;
+                    
+                    seatCount++;
+                    const seatId = `${sectionNum}-${row + 1}-${col + 1}`;
+                    const seatDiv = createSeat(seatId, seatCount);
+                    rowDiv.appendChild(seatDiv);
+                }
+                
+                container.appendChild(rowDiv);
+                if (seatCount >= totalSeats) break;
+            }
+        }
+
+        // 개별 자리 생성
+        function createSeat(seatId, displayNum) {
+            const seatDiv = document.createElement('div');
+            seatDiv.className = 'seat';
+            seatDiv.dataset.seatId = seatId;
+            seatDiv.dataset.displayNum = displayNum;
+            
+            const seatNumber = document.createElement('div');
+            seatNumber.className = 'seat-number';
+            seatNumber.textContent = displayNum;
+            
+            const seatOwner = document.createElement('div');
+            seatOwner.className = 'seat-owner';
+            
+            seatDiv.appendChild(seatNumber);
+            seatDiv.appendChild(seatOwner);
+            
+            seatDiv.onclick = () => handleSeatClick(seatId);
+            
+            return seatDiv;
+        }
+
+        // 자리 클릭 처리
+        async function handleSeatClick(seatId) {
+            const seatRef = ref(database, `seats/${seatId}`);
+            
+            // 현재 자리 상태 확인
+            const snapshot = await get(seatRef);
+            const currentOwner = snapshot.val();
+            
+            if (currentOwner && currentOwner !== currentStudent) {
+                showNotification('이미 선택된 자리입니다! 😢');
+                return;
+            }
+            
+            if (currentOwner === currentStudent) {
+                // 자기 자리 취소
+                if (confirm('자리를 취소하시겠습니까?')) {
+                    await remove(seatRef);
+                    showNotification('자리가 취소되었습니다.');
+                }
+                return;
+            }
+            
+            // 이미 다른 자리를 선택했는지 확인
+            const allSeatsSnapshot = await get(ref(database, 'seats'));
+            const allSeats = allSeatsSnapshot.val() || {};
+            
+            const myCurrentSeat = Object.keys(allSeats).find(id => allSeats[id] === currentStudent);
+            if (myCurrentSeat) {
+                showNotification('이미 자리를 선택하셨습니다! 현재 자리를 먼저 취소해주세요.');
+                return;
+            }
+            
+            // 자리 선택
+            try {
+                await set(seatRef, currentStudent);
+                showNotification('자리 선택 완료! 🎉');
+            } catch (error) {
+                showNotification('자리 선택 실패. 다시 시도해주세요.');
+                console.error(error);
+            }
+        }
+
+        // 교실 업데이트
+        function updateClassroom(seats) {
+            document.querySelectorAll('.seat').forEach(seatDiv => {
+                const seatId = seatDiv.dataset.seatId;
+                const owner = seats[seatId];
+                const ownerElement = seatDiv.querySelector('.seat-owner');
+                
+                // 모든 클래스 제거
+                seatDiv.classList.remove('taken', 'my-seat');
+                
+                if (owner) {
+                    ownerElement.textContent = owner;
+                    if (owner === currentStudent) {
+                        seatDiv.classList.add('my-seat');
+                    } else {
+                        seatDiv.classList.add('taken');
+                    }
+                } else {
+                    ownerElement.textContent = '';
+                }
+            });
+        }
+
+        // 남은 자리 수 업데이트
+        function updateSeatCount(seats) {
+            const totalSeats = 35;
+            const takenSeats = Object.keys(seats).length;
+            const availableSeats = totalSeats - takenSeats;
+            document.getElementById('availableSeats').textContent = availableSeats;
+        }
+
+        // 알림 표시
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 모든 자리 초기화 (관리자 기능)
+        async function resetAllSeats() {
+            if (confirm('정말로 모든 자리를 초기화하시겠습니까?')) {
+                const password = prompt('관리자 비밀번호를 입력하세요:');
+                if (password === 'admin1234') {
+                    await remove(ref(database, 'seats'));
+                    alert('모든 자리가 초기화되었습니다.');
+                } else {
+                    alert('비밀번호가 틀렸습니다.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
